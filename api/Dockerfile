@@ -1,29 +1,34 @@
-FROM golang:alpine as builder
 
-RUN mkdir /build
+FROM golang:alpine
 
-ADD . /build/
+# Set necessary environmet variables needed for our image
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
 
+# Move to working directory /build
 WORKDIR /build
 
-RUN go version
+# Copy and download dependency using go mod
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 
+# Copy the code into the container
+COPY . .
+
+# Build the application
 RUN go build -o main .
 
-# stage 2
+# Move to /dist directory as the place for resulting binary folder
+WORKDIR /dist
 
-FROM alpine
+# Copy binary from build to main folder
+RUN cp /build/main .
 
-RUN adduser -S -D -H -h /app appuser
-
-USER appuser
-
-COPY . /app
-
-COPY --from=builder /build/main /app/
-
-WORKDIR /app/
-
+# Export necessary port
 EXPOSE 5000
 
-CMD ["./main"]
+# Command to run when starting the container
+CMD ["/dist/main"]
