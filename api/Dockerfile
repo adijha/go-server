@@ -1,4 +1,3 @@
-
 FROM golang:alpine
 
 # Set necessary environmet variables needed for our image
